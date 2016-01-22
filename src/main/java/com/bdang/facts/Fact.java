@@ -1,5 +1,7 @@
 package com.bdang.facts;
 
+import com.google.common.base.Preconditions;
+
 import javax.annotation.concurrent.Immutable;
 
 @Immutable
@@ -30,12 +32,16 @@ public class Fact {
     }
 
     private final String subject;
-    private final String rel;
+    private final Relation rel;
     private final String object;
 
     private Fact(String subject, String rel, String object) {
+        Preconditions.checkNotNull(subject);
+        Preconditions.checkNotNull(rel);
+        Preconditions.checkNotNull(object);
+
         this.subject = subject;
-        this.rel = rel;
+        this.rel = Relation.fromString(rel);
         this.object = object;
     }
 
@@ -43,7 +49,7 @@ public class Fact {
         return subject;
     }
 
-    public String getRel() {
+    public Relation getRel() {
         return rel;
     }
 
