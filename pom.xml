@@ -20,14 +20,19 @@
       <artifactId>gremlin-driver</artifactId>
       <version>3.0.1-incubating</version>
     </dependency>
-    <!-- Unit Test -->
+
+    <dependency>
+      <groupId>com.tinkerpop.gremlin</groupId>
+      <artifactId>gremlin-java</artifactId>
+      <version>2.6.0</version>
+    </dependency>
+
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>${junit.version}</version>
     </dependency>
 
-    <!-- Spring Core -->
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-core</artifactId>
@@ -64,11 +69,16 @@
       <version>${spring.version}</version>
     </dependency>
 
-    <!-- jstl -->
     <dependency>
       <groupId>jstl</groupId>
       <artifactId>jstl</artifactId>
       <version>${jstl.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.google.code.findbugs</groupId>
+      <artifactId>jsr305</artifactId>
+      <version>3.0.1</version>
     </dependency>
   </dependencies>
   <build>
