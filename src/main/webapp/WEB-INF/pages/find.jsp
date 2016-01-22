@@ -1,0 +1,1 @@
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>[<c:forEach items="${objects}" var="object" varStatus="status"><c:if test="${status.count > 1}">,</c:if>"${object}"</c:forEach>]

@@ -7,6 +7,7 @@ import org.apache.tinkerpop.gremlin.driver.ResultSet;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
@@ -15,36 +16,47 @@ import java.util.function.Consumer;
 @Controller
 public class BaseController {
 
-    private static final String VIEW_INDEX = "index";
-    private static final String VIEW_JSON = "json";
-    private final static org.slf4j.Logger logger = LoggerFactory.getLogger(BaseController.class);
+    private static final String VIEW_COUNT = "count";
+    private static final String VIEW_FACT = "fact";
+    private static final String VIEW_FACTID = "factid";
+    private static final String VIEW_FIND = "find";
 
-    @RequestMapping(value = "/comics", method = RequestMethod.GET)
-    public String comics(ModelMap model) {
-
-        Cluster cluster = Cluster.open();
-        Client client = cluster.connect();
-
-        final StringBuilder builder = new StringBuilder();
-
-        ResultSet resultSet = client.submit("g.V().has('comic-book', 'AVF 4').in('appeared').has('weapon', without('shield','claws')).values('character').order()");
-        resultSet.stream().forEach(new Consumer<Result>() {
-            public void accept(Result result) {
-                builder.append(result.getString());
-                builder.append("\n");
-            }
-        });
-
-        model.addAttribute("message", "Comics: " + builder.toString());
-
-        // Spring uses InternalResourceViewResolver and return back index.jsp
-        return VIEW_INDEX;
+    @RequestMapping(value = "/animals/facts", method = RequestMethod.POST, produces = "application/json")
+    public String putFact(ModelMap model) {
+        String id = "0b3431e3-2351-46f1-ad90-fa022a60ba15";
+        model.addAttribute("id", id);
+        return VIEW_FACTID;
     }
 
-    @RequestMapping(value = "/animals/facts", method = RequestMethod.POST)
-    public String putFact(ModelMap model) {
-        String factId = "0b3431e3-2351-46f1-ad90-fa022a60ba15";
-        model.addAttribute("jsonOutput", "{ \"id\": \"" + factId + "\" }");
-        return VIEW_INDEX;
+    @RequestMapping(value = "/animals/facts/{id}", method = RequestMethod.GET, produces = "application/json")
+    public String getFact(ModelMap model, @PathVariable("id") String id) {
+        String subject = "otter";
+        String rel = "rel";
+        String object = "object";
+        model.addAttribute("subject", subject);
+        model.addAttribute("rel", rel);
+        model.addAttribute("object", object);
+        return VIEW_FACT;
+    }
+
+
+    @RequestMapping(value = "/animals/facts/{id}", method = RequestMethod.DELETE, produces = "application/json")
+    public String deleteFact(ModelMap model, @PathVariable("id") String id) {
+        model.addAttribute("id", id);
+        return VIEW_FACTID;
+    }
+
+    @RequestMapping(value = "/animals/which", method = RequestMethod.GET, produces = "application/json")
+    public String find(ModelMap model) {
+        String[] objects = { "otter", "fox", "moose" };
+        model.addAttribute("objects", objects);
+        return VIEW_FIND;
+    }
+
+    @RequestMapping(value = "/animals/how-many", method = RequestMethod.GET, produces = "application/json")
+    public String count(ModelMap model) {
+        long count = 3;
+        model.addAttribute("count", count);
+        return VIEW_COUNT;
     }
 }
