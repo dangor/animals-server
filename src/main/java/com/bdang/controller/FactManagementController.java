@@ -45,6 +45,7 @@ public class FactManagementController {
     }
 
     @RequestMapping(value = "/animals/facts/{id}", method = RequestMethod.GET, produces = "application/json")
+    @ResponseBody
     public String getFact(@PathVariable("id") String id) {
         Fact fact = accessor.get(id);
         if (fact == null) {
@@ -55,6 +56,7 @@ public class FactManagementController {
     }
 
     @RequestMapping(value = "/animals/facts/{id}", method = RequestMethod.DELETE, produces = "application/json")
+    @ResponseBody
     public String deleteFact(@PathVariable("id") String id) {
         boolean deleted = accessor.delete(id);
         if (!deleted) {
