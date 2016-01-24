@@ -3,12 +3,15 @@ package com.bdang.storage;
 import com.bdang.facts.Fact;
 import com.bdang.facts.Relation;
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.commons.configuration.ConfigurationException;
 import org.apache.tinkerpop.gremlin.process.traversal.Traverser;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.*;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
+import org.apache.tinkerpop.gremlin.util.config.YamlConfiguration;
 
+import java.io.*;
 import java.util.*;
 import java.util.function.Predicate;
 
@@ -28,9 +31,17 @@ public class TinkerGraphAccessor implements Accessor {
         final Graph graph;
         switch (location) {
             case REMOTE:
-                // graph = TinkerGraph.open(new org.apache.tinkerpop.gremlin.driver.YamlConfiguration(remoteGremlinConfig));
-                g = null;
-                return;
+                YamlConfiguration config = new YamlConfiguration();
+                try {
+                    config.load(new BufferedReader(new FileReader(remoteGremlinConfig)));
+                } catch (ConfigurationException|FileNotFoundException e) {
+                    System.err.println("Could not open file " + remoteGremlinConfig);
+                    e.printStackTrace();
+                    graph = TinkerGraph.open();
+                    break;
+                }
+                graph = TinkerGraph.open(config);
+                break;
             case LOCAL :
             default:
                 graph = TinkerGraph.open();
@@ -69,13 +80,20 @@ public class TinkerGraphAccessor implements Accessor {
 
     // O(1)
     public boolean delete(String id) {
-        g.E().hasId(id).drop().iterate();
+        if (!g.E().hasId(id).hasNext()) {
+            return false;
+        }
 
+        g.E().hasId(id).drop().iterate();
         return true;
     }
 
     // O(1)
     public Fact get(String id) {
+        if (!g.E().hasId(id).hasNext()) {
+            return null;
+        }
+
         Fact.Builder builder = new Fact.Builder();
 
         builder.subject(g.E().hasId(id).outV().next().value(NAME).toString());

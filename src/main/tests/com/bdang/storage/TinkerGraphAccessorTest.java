@@ -51,6 +51,9 @@ public class TinkerGraphAccessorTest {
 
         assertTrue(deleted);
         assertFalse(g.E().hasId(id).hasNext());
+
+        deleted = accessor.delete("non-existent id");
+        assertFalse(deleted);
     }
 
     @Test
@@ -68,6 +71,9 @@ public class TinkerGraphAccessorTest {
         assertThat(fact.getSubject(), equalTo("otter"));
         assertThat(fact.getRel().toString(), equalTo(Relation.LIVES.toString()));
         assertThat(fact.getObject(), equalTo("river"));
+
+        fact = accessor.get("non-existent id");
+        assertNull(fact);
     }
 
     @Test
