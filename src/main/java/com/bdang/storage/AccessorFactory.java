@@ -7,12 +7,12 @@ package com.bdang.storage;
  */
 public class AccessorFactory {
 
-    private static GremlinAccessor gremlinAccessor;
+    private static TinkerGraphAccessor tinkerGraphAccessor;
 
     public static Accessor getAccessor() {
-        if (gremlinAccessor == null) {
-            gremlinAccessor = new GremlinAccessor();
+        if (tinkerGraphAccessor == null) {
+            tinkerGraphAccessor = new TinkerGraphAccessor(TinkerGraphAccessor.Location.LOCAL);
         }
-        return gremlinAccessor;
+        return tinkerGraphAccessor;
     }
 }
