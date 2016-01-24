@@ -1,17 +1,16 @@
 package com.bdang.storage;
 
 import com.bdang.facts.Fact;
-import com.bdang.facts.Relation;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
-import static org.hamcrest.CoreMatchers.*;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
 
 public class TinkerGraphAccessorTest {
@@ -24,13 +23,13 @@ public class TinkerGraphAccessorTest {
         GraphTraversalSource g = graph.traversal();
         Accessor accessor = new TinkerGraphAccessor(g);
 
-        Fact fact = new Fact.Builder().subject("otter").rel(Relation.LIVES.toString()).object("river").build();
+        Fact fact = new Fact.Builder().subject("otter").rel("lives").object("river").build();
 
         String id1 = accessor.put(fact);
 
         assertTrue(g.V().has(NAME, "otter").hasNext());
         assertTrue(g.V().has(NAME, "river").hasNext());
-        assertTrue(g.V().has(NAME, "otter").out(Relation.LIVES.toString()).has(NAME, "river").hasNext());
+        assertTrue(g.V().has(NAME, "otter").out("lives").has(NAME, "river").hasNext());
 
         String id2 = accessor.put(fact);
 
@@ -42,7 +41,7 @@ public class TinkerGraphAccessorTest {
         Graph graph = TinkerGraph.open();
         Vertex subject = graph.addVertex(NAME, "otter");
         Vertex object = graph.addVertex(NAME, "river");
-        String id = subject.addEdge(Relation.LIVES.toString(), object).id().toString();
+        String id = subject.addEdge("lives", object).id().toString();
 
         GraphTraversalSource g = graph.traversal();
         Accessor accessor = new TinkerGraphAccessor(g);
@@ -61,7 +60,7 @@ public class TinkerGraphAccessorTest {
         Graph graph = TinkerGraph.open();
         Vertex subject = graph.addVertex(NAME, "otter");
         Vertex object = graph.addVertex(NAME, "river");
-        String id = subject.addEdge(Relation.LIVES.toString(), object).id().toString();
+        String id = subject.addEdge("lives", object).id().toString();
 
         GraphTraversalSource g = graph.traversal();
         Accessor accessor = new TinkerGraphAccessor(g);
@@ -69,7 +68,7 @@ public class TinkerGraphAccessorTest {
         Fact fact = accessor.get(id);
 
         assertThat(fact.getSubject(), equalTo("otter"));
-        assertThat(fact.getRel().toString(), equalTo(Relation.LIVES.toString()));
+        assertThat(fact.getRel(), equalTo("lives"));
         assertThat(fact.getObject(), equalTo("river"));
 
         fact = accessor.get("non-existent id");
@@ -88,8 +87,8 @@ public class TinkerGraphAccessorTest {
         Vertex animal = graph.addVertex(NAME, "animal");
         
         for (Vertex vertex : animals) {
-            vertex.addEdge(Relation.ISA.toString(), animal);
-            vertex.addEdge(Relation.HAS.toString(), legs);
+            vertex.addEdge("isa", animal);
+            vertex.addEdge("has", legs);
         }
 
         GraphTraversalSource g = graph.traversal();
@@ -114,8 +113,8 @@ public class TinkerGraphAccessorTest {
         Vertex animal = graph.addVertex(NAME, "animal");
 
         for (Vertex vertex : animals) {
-            vertex.addEdge(Relation.ISA.toString(), animal);
-            vertex.addEdge(Relation.HAS.toString(), legs);
+            vertex.addEdge("isa", animal);
+            vertex.addEdge("has", legs);
         }
 
         GraphTraversalSource g = graph.traversal();

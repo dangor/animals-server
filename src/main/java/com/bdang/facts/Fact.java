@@ -1,5 +1,6 @@
 package com.bdang.facts;
 
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 
 import javax.annotation.concurrent.Immutable;
@@ -32,7 +33,7 @@ public class Fact {
     }
 
     private final String subject;
-    private final Relation rel;
+    private final String rel;
     private final String object;
 
     private Fact(String subject, String rel, String object) {
@@ -40,8 +41,11 @@ public class Fact {
         Preconditions.checkNotNull(rel);
         Preconditions.checkNotNull(object);
 
+        // Check relation whitelist
+        Relation.fromString(rel);
+
         this.subject = subject;
-        this.rel = Relation.fromString(rel);
+        this.rel = rel;
         this.object = object;
     }
 
@@ -49,11 +53,26 @@ public class Fact {
         return subject;
     }
 
-    public Relation getRel() {
+    public String getRel() {
         return rel;
     }
 
     public String getObject() {
         return object;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Fact fact = (Fact) o;
+        return Objects.equal(subject, fact.subject) &&
+                Objects.equal(rel, fact.rel) &&
+                Objects.equal(object, fact.object);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(subject, rel, object);
     }
 }

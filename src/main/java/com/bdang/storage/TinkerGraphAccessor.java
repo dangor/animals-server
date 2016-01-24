@@ -76,7 +76,7 @@ public class TinkerGraphAccessor implements Accessor {
 
         // If both subject and object existed, then check for existing edge. If none, create one.
         if (bothVerticesExist) {
-            Iterator<Edge> edges = vSubject.edges(Direction.OUT, fact.getRel().toString());
+            Iterator<Edge> edges = vSubject.edges(Direction.OUT, fact.getRel());
             while (edges.hasNext()) {
                 Edge edge = edges.next();
                 if (edge.inVertex().id().equals(vObject.id())) {
@@ -85,7 +85,7 @@ public class TinkerGraphAccessor implements Accessor {
             }
         }
 
-        return vSubject.addEdge(fact.getRel().toString(), vObject).id().toString();
+        return vSubject.addEdge(fact.getRel(), vObject).id().toString();
     }
 
     // O(1)
@@ -121,7 +121,7 @@ public class TinkerGraphAccessor implements Accessor {
             @Override
             public boolean test(Traverser<Vertex> v) {
                 Vertex vertex = v.get();
-                Iterator<Edge> edges = vertex.edges(Direction.OUT, query.getRel().toString());
+                Iterator<Edge> edges = vertex.edges(Direction.OUT, query.getRel());
                 while (edges.hasNext()) {
                     Edge edge = edges.next();
                     if (query.getObject().equals(edge.inVertex().value(NAME).toString())) {
@@ -136,11 +136,11 @@ public class TinkerGraphAccessor implements Accessor {
             findResults.add(filter.next().value(NAME).toString());
         }
 
-        return findResults;
+        return Collections.unmodifiableList(findResults);
     }
 
     // O(m * n) where m = concepts matching "isa [subject]" and n = edges with relationship from m concepts
     public long count(Fact query) {
-        return g.V().has(NAME, query.getSubject()).in(Relation.ISA.toString()).out(query.getRel().toString()).has(NAME, query.getObject()).count().next();
+        return g.V().has(NAME, query.getSubject()).in(Relation.ISA.toString()).out(query.getRel()).has(NAME, query.getObject()).count().next();
     }
 }
