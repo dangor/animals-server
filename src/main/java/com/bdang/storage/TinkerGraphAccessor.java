@@ -54,28 +54,38 @@ public class TinkerGraphAccessor implements Accessor {
         this.g = g;
     }
 
-    // O(n) where n = edges with relationship from subject
+    // Worst case: O(n) where n = edges with relationship from subject
+    // Best case: O(1) if the edge already exists
     public String put(final Fact fact) {
-        // 1. Ensure both subject and object are existing vertices. If not, create them.
-        // 2. Create an edge if it isn't already there
-        final Vertex subject = getOrAddVertex(fact.getSubject());
-        final Vertex object = getOrAddVertex(fact.getObject());
+        // Ensure both subject and object are existing vertices. If not, create them.
+        boolean bothVerticesExist = true;
 
-        Iterator<Edge> edges = subject.edges(Direction.OUT, fact.getRel().toString());
-        while (edges.hasNext()) {
-            Edge edge = edges.next();
-            if (edge.inVertex().id().equals(object.id())) {
-                return edge.id().toString();
+        GraphTraversal<Vertex, Vertex> tSubject = g.V().has(NAME, fact.getSubject());
+        if (!tSubject.hasNext()) {
+            tSubject = g.addV(NAME, fact.getSubject());
+            bothVerticesExist = false;
+        }
+        Vertex vSubject = tSubject.next();
+
+        GraphTraversal<Vertex, Vertex> tObject = g.V().has(NAME, fact.getObject());
+        if (!tObject.hasNext()) {
+            tObject = g.addV(NAME, fact.getObject());
+            bothVerticesExist = false;
+        }
+        Vertex vObject = tObject.next();
+
+        // If both subject and object existed, then check for existing edge. If none, create one.
+        if (bothVerticesExist) {
+            Iterator<Edge> edges = vSubject.edges(Direction.OUT, fact.getRel().toString());
+            while (edges.hasNext()) {
+                Edge edge = edges.next();
+                if (edge.inVertex().id().equals(vObject.id())) {
+                    return edge.id().toString();
+                }
             }
         }
 
-        return subject.addEdge(fact.getRel().toString(), object).id().toString();
-    }
-
-    // O(1)
-    private Vertex getOrAddVertex(String s) {
-        GraphTraversal<Vertex, Vertex> t = g.V().has(NAME, s);
-        return t.hasNext() ? t.next() : g.addV(NAME, s).next();
+        return vSubject.addEdge(fact.getRel().toString(), vObject).id().toString();
     }
 
     // O(1)
