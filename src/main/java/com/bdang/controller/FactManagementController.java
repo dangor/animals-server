@@ -8,6 +8,7 @@ import com.bdang.storage.AccessorFactory;
 import com.bdang.storage.DBLocation;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -68,5 +69,27 @@ public class FactManagementController {
 
         IdResponse response = new IdResponse(id);
         return new Gson().toJson(response);
+    }
+
+    @ExceptionHandler(FactParseException.class)
+    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
+    @ResponseBody
+    public String factParseError() {
+        MessageResponse output = new MessageResponse("Failed to parse your fact");
+        return new Gson().toJson(output);
+    }
+
+    private final class MessageResponse {
+        private String message;
+        private MessageResponse(String message) {
+            this.message = message;
+        }
+    }
+
+    @ExceptionHandler(FactIdNotFoundException.class)
+    @ResponseStatus(value = HttpStatus.NOT_FOUND)
+    @ResponseBody
+    public String factIdNotFound() {
+        return "";
     }
 }

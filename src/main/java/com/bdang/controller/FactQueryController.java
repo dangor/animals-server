@@ -9,11 +9,9 @@ import com.bdang.storage.DBLocation;
 import com.bdang.storage.exception.UnregisteredConceptException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -68,5 +66,28 @@ public class FactQueryController {
         } catch (UnregisteredConceptException e) {
             throw new InvalidFactQueryException(query, e);
         }
+    }
+
+    @ExceptionHandler(FactQueryParseException.class)
+    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
+    @ResponseBody
+    public String factQueryParseError() {
+        ErrorResponse output = new ErrorResponse("Failed to parse your query");
+        return new Gson().toJson(output);
+    }
+
+    private final class ErrorResponse {
+        private String error;
+        private ErrorResponse(String error) {
+            this.error = error;
+        }
+    }
+
+    @ExceptionHandler(InvalidFactQueryException.class)
+    @ResponseStatus(value = HttpStatus.NOT_FOUND)
+    @ResponseBody
+    public String invalidFactQuery() {
+        ErrorResponse output = new ErrorResponse("I can't answer your query.");
+        return new Gson().toJson(output);
     }
 }
