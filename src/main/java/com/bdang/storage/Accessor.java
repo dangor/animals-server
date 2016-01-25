@@ -1,6 +1,7 @@
 package com.bdang.storage;
 
 import com.bdang.facts.Fact;
+import com.bdang.storage.exception.UnregisteredConceptException;
 
 import java.util.List;
 
@@ -34,12 +35,12 @@ public interface Accessor {
      * @param query Fact representing the search query
      * @return Matching facts
      */
-    List<String> find(Fact query);
+    List<String> find(Fact query) throws UnregisteredConceptException;
 
     /**
      * Return a count of all facts which match the given search query.
      * @param query Fact representing the search query
      * @return Count of matching facts
      */
-    long count(Fact query);
+    long count(Fact query) throws UnregisteredConceptException;
 }

@@ -75,4 +75,13 @@ public class Fact {
     public int hashCode() {
         return Objects.hashCode(subject, rel, object);
     }
+
+    @Override
+    public String toString() {
+        return Objects.toStringHelper(this)
+                .add("subject", subject)
+                .add("rel", rel)
+                .add("object", object)
+                .toString();
+    }
 }

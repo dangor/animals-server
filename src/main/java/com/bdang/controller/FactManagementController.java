@@ -1,8 +1,11 @@
 package com.bdang.controller;
 
+import com.bdang.controller.exception.FactIdNotFoundException;
+import com.bdang.controller.exception.FactParseException;
 import com.bdang.facts.Fact;
 import com.bdang.storage.Accessor;
 import com.bdang.storage.AccessorFactory;
+import com.bdang.storage.DBLocation;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import org.springframework.stereotype.Controller;
@@ -10,15 +13,10 @@ import org.springframework.web.bind.annotation.*;
 
 @Controller
 public class FactManagementController {
-    private static final String SUBJECT = "subject";
-    private static final String REL = "rel";
-    private static final String OBJECT = "object";
-    private static final String ID = "id";
-
     private final Accessor accessor;
 
     public FactManagementController() {
-        accessor = AccessorFactory.getAccessor();
+        accessor = AccessorFactory.getAccessor(DBLocation.INMEMORY);
     }
 
     @VisibleForTesting
@@ -29,7 +27,12 @@ public class FactManagementController {
     @RequestMapping(value = "/animals/facts", method = RequestMethod.POST, produces = "application/json")
     @ResponseBody
     public String putFact(@RequestBody String body) {
-        Fact fact = new Gson().fromJson(body, Fact.Builder.class).build();
+        Fact fact;
+        try {
+            fact = new Gson().fromJson(body, Fact.Builder.class).build();
+        } catch (NullPointerException|IllegalArgumentException e) {
+            throw new FactParseException(body, e);
+        }
 
         String id = accessor.put(fact);
 
@@ -49,7 +52,7 @@ public class FactManagementController {
     public String getFact(@PathVariable("id") String id) {
         Fact fact = accessor.get(id);
         if (fact == null) {
-            return "";
+            throw new FactIdNotFoundException(id);
         }
 
         return new Gson().toJson(fact);
@@ -60,7 +63,7 @@ public class FactManagementController {
     public String deleteFact(@PathVariable("id") String id) {
         boolean deleted = accessor.delete(id);
         if (!deleted) {
-            return "";
+            throw new FactIdNotFoundException(id);
         }
 
         IdResponse response = new IdResponse(id);

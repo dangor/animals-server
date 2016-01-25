@@ -2,6 +2,7 @@ package com.bdang.storage;
 
 import com.bdang.facts.Fact;
 import com.bdang.facts.Relation;
+import com.bdang.storage.exception.UnregisteredConceptException;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.tinkerpop.gremlin.process.traversal.Traverser;
@@ -17,20 +18,15 @@ import java.util.function.Predicate;
 
 public class TinkerGraphAccessor implements Accessor {
 
-    public enum Location {
-        LOCAL,
-        REMOTE
-    }
-
     private static final String remoteGremlinConfig = "/Users/bdang/animals/dynamodb-titan-storage-backend/server/dynamodb-titan100-storage-backend-1.0.0-hadoop1/conf/remote.yaml";
     private static final String NAME = "name";
     private final GraphTraversalSource g;
 
     // Package visibility for factory
-    TinkerGraphAccessor(Location location) {
+    TinkerGraphAccessor(DBLocation dbLocation) {
         final Graph graph;
-        switch (location) {
-            case REMOTE:
+        switch (dbLocation) {
+            case EXTERNAL:
                 YamlConfiguration config = new YamlConfiguration();
                 try {
                     config.load(new BufferedReader(new FileReader(remoteGremlinConfig)));
@@ -42,7 +38,7 @@ public class TinkerGraphAccessor implements Accessor {
                 }
                 graph = TinkerGraph.open(config);
                 break;
-            case LOCAL :
+            case INMEMORY:
             default:
                 graph = TinkerGraph.open();
         }
@@ -114,7 +110,7 @@ public class TinkerGraphAccessor implements Accessor {
     }
 
     // O(m * n) where m = concepts matching "isa [subject]" and n = edges with relationship from m concepts
-    public List<String> find(final Fact query) {
+    public List<String> find(final Fact query) throws UnregisteredConceptException {
         final List<String> findResults = new ArrayList<>();
 
         GraphTraversal<Vertex, Vertex> filter = g.V().has(NAME, query.getSubject()).in(Relation.ISA.toString()).filter(new Predicate<Traverser<Vertex>>() {
@@ -140,7 +136,7 @@ public class TinkerGraphAccessor implements Accessor {
     }
 
     // O(m * n) where m = concepts matching "isa [subject]" and n = edges with relationship from m concepts
-    public long count(Fact query) {
+    public long count(Fact query) throws UnregisteredConceptException {
         return g.V().has(NAME, query.getSubject()).in(Relation.ISA.toString()).out(query.getRel()).has(NAME, query.getObject()).count().next();
     }
 }

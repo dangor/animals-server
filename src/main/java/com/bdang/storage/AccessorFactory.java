@@ -9,9 +9,9 @@ public class AccessorFactory {
 
     private static TinkerGraphAccessor tinkerGraphAccessor;
 
-    public static Accessor getAccessor() {
+    public static Accessor getAccessor(DBLocation dbLocation) {
         if (tinkerGraphAccessor == null) {
-            tinkerGraphAccessor = new TinkerGraphAccessor(TinkerGraphAccessor.Location.LOCAL);
+            tinkerGraphAccessor = new TinkerGraphAccessor(dbLocation);
         }
         return tinkerGraphAccessor;
     }

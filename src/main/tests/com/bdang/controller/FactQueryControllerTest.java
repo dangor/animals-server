@@ -1,7 +1,10 @@
 package com.bdang.controller;
 
+import com.bdang.controller.exception.FactQueryParseException;
+import com.bdang.controller.exception.InvalidFactQueryException;
 import com.bdang.facts.Fact;
 import com.bdang.storage.Accessor;
+import com.bdang.storage.exception.UnregisteredConceptException;
 import com.google.gson.Gson;
 import org.junit.Test;
 
@@ -30,6 +33,45 @@ public class FactQueryControllerTest {
     }
 
     @Test
+    public void testFindParseError() throws Exception {
+        FactQueryController controller = new FactQueryController(mock(Accessor.class));
+        try {
+            controller.find(null, null, null);
+            fail("Expected an exception to be thrown, but didn't catch one.");
+        } catch (Exception e) {
+            assertTrue(e instanceof FactQueryParseException);
+        }
+    }
+
+    @Test
+    public void testFindInvalidRelationship() throws Exception {
+        FactQueryController controller = new FactQueryController(mock(Accessor.class));
+        try {
+            controller.find("otter", "contemplates", "existence");
+            fail("Expected an exception to be thrown, but didn't catch one.");
+        } catch (Exception e) {
+            assertTrue(e instanceof FactQueryParseException);
+        }
+    }
+
+    @Test
+    public void testFindInvalidQuery() throws Exception {
+        Fact query = new Fact.Builder().subject("animal").rel("has").object("toenails").build();
+
+        Accessor accessor = mock(Accessor.class);
+        when(accessor.find(eq(query))).thenThrow(new UnregisteredConceptException("toenails"));
+
+        FactQueryController controller = new FactQueryController(accessor);
+
+        try {
+            controller.find("animal", "has", "toenails");
+            fail("Expected an exception to be thrown, but didn't catch one.");
+        } catch(Exception e) {
+            assertTrue(e instanceof InvalidFactQueryException);
+        }
+    }
+
+    @Test
     public void testCount() throws Exception {
         Fact query = new Fact.Builder().subject("animal").rel("has").object("legs").build();
 
@@ -40,5 +82,44 @@ public class FactQueryControllerTest {
         String response = controller.count("animal", "has", "legs");
 
         assertThat(response, equalTo("3"));
+    }
+
+    @Test
+    public void testCountParseError() throws Exception {
+        FactQueryController controller = new FactQueryController(mock(Accessor.class));
+        try {
+            controller.count(null, null, null);
+            fail("Expected an exception to be thrown, but didn't catch one.");
+        } catch (Exception e) {
+            assertTrue(e instanceof FactQueryParseException);
+        }
+    }
+
+    @Test
+    public void testCountInvalidRelationship() throws Exception {
+        FactQueryController controller = new FactQueryController(mock(Accessor.class));
+        try {
+            controller.count("otter", "contemplates", "existence");
+            fail("Expected an exception to be thrown, but didn't catch one.");
+        } catch (Exception e) {
+            assertTrue(e instanceof FactQueryParseException);
+        }
+    }
+
+    @Test
+    public void testCountInvalidQuery() throws Exception {
+        Fact query = new Fact.Builder().subject("animal").rel("has").object("toenails").build();
+
+        Accessor accessor = mock(Accessor.class);
+        when(accessor.count(eq(query))).thenThrow(new UnregisteredConceptException("toenails"));
+
+        FactQueryController controller = new FactQueryController(accessor);
+
+        try {
+            controller.count("animal", "has", "toenails");
+            fail("Expected an exception to be thrown, but didn't catch one.");
+        } catch(Exception e) {
+            assertTrue(e instanceof InvalidFactQueryException);
+        }
     }
 }
