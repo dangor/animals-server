@@ -1,0 +1,37 @@
+concept,has,eats,lives,isa
+bear,leg:tail,berries:herring:salmon:grass,forest:meadow:den,mammal:animal
+deer,leg:tail,grass:berries,forest:meadow,mammal:animal
+skunk,leg:tail,berries:insect,forest:meadow,mammal:animal
+gecko,leg:tail,insect:arachnid,tree,reptile:animal
+heron,wing:tail:leg,insect:arachnid,river:ocean,bird:animal
+cormorant,wing:tail:leg,insect:herring,ocean,bird:animal
+herring,fin:tail,insect:arachnid,ocean,fish:animal:food
+salmon,fin:tail,insect:arachnid,river:ocean,fish:animal:food
+otter,leg:tail,herring:salmon,river:ocean,mammal:animal
+bee,wing:stingerr,nectar,meadow:hive,insect:animal
+spider,leg,insects,forest:meadow:web,arachnid:animal
+coyote,leg:tail,salmon:otter:skunk:deer,forest:meadow:den,mammal:animal
+berries,,,,food
+grass,,,,food
+nectar,,,,food
+insects,,,,species:food
+wing,,,,body part
+tail,,,,body part
+stinger,,,,body part
+fin,,,,body part
+leg,,,,body part
+river,,,,place
+hive,,,,place
+forest,,,,place
+meadow,grass:insects,,,place
+tree,,,,place
+den,,,,place
+web,,,,place
+river,,,,place
+ocean,,,,place
+reptile,,,,species:animal
+mammal,,,,species:animal
+arachnid,,,,species:animal
+fish,,,,species:animal
+bird,,,,species:animal
+animal,,,,concept

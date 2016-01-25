@@ -8,6 +8,7 @@ import com.bdang.storage.AccessorFactory;
 import com.bdang.storage.DBLocation;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -31,7 +32,7 @@ public class FactManagementController {
         Fact fact;
         try {
             fact = new Gson().fromJson(body, Fact.Builder.class).build();
-        } catch (NullPointerException|IllegalArgumentException e) {
+        } catch (JsonSyntaxException|NullPointerException|IllegalArgumentException e) {
             throw new FactParseException(body, e);
         }
 

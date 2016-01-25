@@ -20,11 +20,12 @@ public class TinkerGraphAccessor implements Accessor {
 
     private static final String remoteGremlinConfig = "/Users/bdang/animals/dynamodb-titan-storage-backend/server/dynamodb-titan100-storage-backend-1.0.0-hadoop1/conf/remote.yaml";
     private static final String NAME = "name";
+    private static final String GUID = "guid";
     private final GraphTraversalSource g;
 
     // Package visibility for factory
     TinkerGraphAccessor(DBLocation dbLocation) {
-        final Graph graph;
+        final TinkerGraph graph;
         switch (dbLocation) {
             case EXTERNAL:
                 YamlConfiguration config = new YamlConfiguration();
@@ -42,6 +43,8 @@ public class TinkerGraphAccessor implements Accessor {
             default:
                 graph = TinkerGraph.open();
         }
+        graph.createIndex(NAME, Vertex.class);
+        graph.createIndex(GUID, Edge.class);
         g = graph.traversal();
     }
 

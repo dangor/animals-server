@@ -9,6 +9,7 @@ import com.bdang.storage.DBLocation;
 import com.bdang.storage.exception.UnregisteredConceptException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -36,7 +37,7 @@ public class FactQueryController {
         Fact query;
         try {
             query = new Fact.Builder().subject(subject).rel(rel).object(object).build();
-        } catch (NullPointerException|IllegalArgumentException e) {
+        } catch (JsonSyntaxException|NullPointerException|IllegalArgumentException e) {
             throw new FactQueryParseException(e, subject, rel, object);
         }
 
@@ -56,7 +57,7 @@ public class FactQueryController {
         Fact query;
         try {
             query = new Fact.Builder().subject(subject).rel(rel).object(object).build();
-        } catch (NullPointerException|IllegalArgumentException e) {
+        } catch (JsonSyntaxException|NullPointerException|IllegalArgumentException e) {
             throw new FactQueryParseException(e, subject, rel, object);
         }
 
