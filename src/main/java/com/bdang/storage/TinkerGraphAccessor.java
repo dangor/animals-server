@@ -30,12 +30,9 @@ public class TinkerGraphAccessor implements Accessor {
             case EXTERNAL:
                 YamlConfiguration config = new YamlConfiguration();
                 try {
-                    config.load(new BufferedReader(new FileReader(remoteGremlinConfig)));
+                    config.load(new FileReader(remoteGremlinConfig));
                 } catch (ConfigurationException|FileNotFoundException e) {
-                    System.err.println("Could not open file " + remoteGremlinConfig);
-                    e.printStackTrace();
-                    graph = TinkerGraph.open();
-                    break;
+                    throw new RuntimeException("Unable to open file", e);
                 }
                 graph = TinkerGraph.open(config);
                 break;
@@ -59,16 +56,16 @@ public class TinkerGraphAccessor implements Accessor {
         // Ensure both subject and object are existing vertices. If not, create them.
         boolean bothVerticesExist = true;
 
-        GraphTraversal<Vertex, Vertex> tSubject = g.V().has(NAME, fact.getSubject());
+        GraphTraversal<Vertex, Vertex> tSubject = g.V().has(NAME, fact.getSubject()); // O(1)
         if (!tSubject.hasNext()) {
-            tSubject = g.addV(NAME, fact.getSubject());
+            tSubject = g.addV(NAME, fact.getSubject()); // O(1)
             bothVerticesExist = false;
         }
         Vertex vSubject = tSubject.next();
 
-        GraphTraversal<Vertex, Vertex> tObject = g.V().has(NAME, fact.getObject());
+        GraphTraversal<Vertex, Vertex> tObject = g.V().has(NAME, fact.getObject()); // O(1)
         if (!tObject.hasNext()) {
-            tObject = g.addV(NAME, fact.getObject());
+            tObject = g.addV(NAME, fact.getObject()); // O(1)
             bothVerticesExist = false;
         }
         Vertex vObject = tObject.next();
@@ -76,64 +73,55 @@ public class TinkerGraphAccessor implements Accessor {
         // If both subject and object existed, then check for existing edge. If none, create one.
         if (bothVerticesExist) {
             Iterator<Edge> edges = vSubject.edges(Direction.OUT, fact.getRel());
-            while (edges.hasNext()) {
+            while (edges.hasNext()) { // O(n)
                 Edge edge = edges.next();
-                if (edge.inVertex().id().equals(vObject.id())) {
+                if (edge.inVertex().id().equals(vObject.id())) { // O(1)
                     return edge.property(GUID).value().toString();
                 }
             }
         }
 
         String guid = UUID.randomUUID().toString();
-        vSubject.addEdge(fact.getRel(), vObject, GUID, guid);
+        vSubject.addEdge(fact.getRel(), vObject, GUID, guid); // O(1)
         return guid;
     }
 
     // O(1)
     public boolean delete(String id) {
-        if (!g.E().has(GUID, id).hasNext()) {
+        if (!g.E().has(GUID, id).hasNext()) { // O(1) - edge property index has been created
             return false;
         }
 
-        g.E().has(GUID, id).drop().iterate();
+        g.E().has(GUID, id).drop().iterate(); // O(1)
         return true;
     }
 
     // O(1)
     public Fact get(String id) {
-        if (!g.E().has(GUID, id).hasNext()) {
+        if (!g.E().has(GUID, id).hasNext()) { // O(1) - edge property index has been created
             return null;
         }
 
-        Fact.Builder builder = new Fact.Builder();
+        Edge e = g.E().has(GUID, id).next(); // O(1)
 
-        builder.subject(g.E().has(GUID, id).outV().next().value(NAME).toString());
-        builder.rel(g.E().has(GUID, id).next().label());
-        builder.object(g.E().has(GUID, id).inV().next().value(NAME).toString());
+        Fact.Builder builder = new Fact.Builder();
+        builder.subject(e.outVertex().value(NAME).toString()); // O(1)
+        builder.rel(e.label()); // O(1)
+        builder.object(e.inVertex().value(NAME).toString()); // O(1)
 
         return builder.build();
     }
 
     // O(m * n) where m = concepts matching "isa [subject]" and n = edges with relationship from m concepts
     public List<String> find(final Fact query) throws UnregisteredConceptException {
+        checkConceptsRegistered(query); // O(1)
+
         final List<String> findResults = new ArrayList<>();
 
-        GraphTraversal<Vertex, Vertex> filter = g.V().has(NAME, query.getSubject()).in(Relation.ISA.toString()).filter(new Predicate<Traverser<Vertex>>() {
-            @Override
-            public boolean test(Traverser<Vertex> v) {
-                Vertex vertex = v.get();
-                Iterator<Edge> edges = vertex.edges(Direction.OUT, query.getRel());
-                while (edges.hasNext()) {
-                    Edge edge = edges.next();
-                    if (query.getObject().equals(edge.inVertex().value(NAME).toString())) {
-                        return true;
-                    }
-                }
-                return false;
-            }
-        });
+        GraphTraversal<Vertex, Vertex> filter = g.V().has(NAME, query.getSubject()).in(Relation.ISA.toString()) // O(m)
+                .filter(new QueryMatchFilter(query));
 
-        while(filter.hasNext()) {
+        while(filter.hasNext()) { // O(n)
             findResults.add(filter.next().value(NAME).toString());
         }
 
@@ -142,6 +130,41 @@ public class TinkerGraphAccessor implements Accessor {
 
     // O(m * n) where m = concepts matching "isa [subject]" and n = edges with relationship from m concepts
     public long count(Fact query) throws UnregisteredConceptException {
+        checkConceptsRegistered(query); // O(1)
+
         return g.V().has(NAME, query.getSubject()).in(Relation.ISA.toString()).out(query.getRel()).has(NAME, query.getObject()).count().next();
+    }
+
+    // O(1)
+    private void checkConceptsRegistered(Fact query) throws UnregisteredConceptException {
+        if (!g.V().has(NAME, query.getSubject()).hasNext()) { // O(1)
+            throw new UnregisteredConceptException(query.getSubject());
+        } else if (!g.V().has(NAME, query.getObject()).hasNext()) { // O(1)
+            throw new UnregisteredConceptException(query.getObject());
+        }
+    }
+
+    /**
+     * Predicate returning true if a vertex has the specified edge to another vertex
+     */
+    private static class QueryMatchFilter implements Predicate<Traverser<Vertex>> {
+        private final Fact query;
+
+        public QueryMatchFilter(Fact query) {
+            this.query = query;
+        }
+
+        @Override
+        public boolean test(Traverser<Vertex> v) {
+            Vertex vertex = v.get();
+            Iterator<Edge> edges = vertex.edges(Direction.OUT, query.getRel());
+            while (edges.hasNext()) {
+                Edge edge = edges.next();
+                if (query.getObject().equals(edge.inVertex().value(NAME).toString())) {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 }

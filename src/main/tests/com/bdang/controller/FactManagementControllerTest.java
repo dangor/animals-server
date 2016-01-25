@@ -40,7 +40,7 @@ public class FactManagementControllerTest {
             controller.putFact("");
             fail("Expected an exception to be thrown, but didn't catch one.");
         } catch (Exception e) {
-            assertTrue(e instanceof FactParseException);
+            assertThat(e, instanceOf(FactParseException.class));
         }
     }
 
@@ -51,7 +51,7 @@ public class FactManagementControllerTest {
             controller.putFact("{ \"subject\": \"otter\", \"rel\": \"contemplates\", \"object\": \"existence\" }");
             fail("Expected an exception to be thrown, but didn't catch one.");
         } catch (Exception e) {
-            assertTrue(e instanceof FactParseException);
+            assertThat(e, instanceOf(FactParseException.class));
         }
     }
 
@@ -82,7 +82,7 @@ public class FactManagementControllerTest {
             controller.getFact(id);
             fail("Expected an exception to be thrown, but didn't catch one.");
         } catch (Exception e) {
-            assertTrue(e instanceof FactIdNotFoundException);
+            assertThat(e, instanceOf(FactIdNotFoundException.class));
         }
     }
 
@@ -112,7 +112,7 @@ public class FactManagementControllerTest {
             controller.deleteFact(id);
             fail("Expected an exception to be thrown, but didn't catch one.");
         } catch (Exception e) {
-            assertTrue(e instanceof FactIdNotFoundException);
+            assertThat(e, instanceOf(FactIdNotFoundException.class));
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.bdang.storage;
 
 import com.bdang.facts.Fact;
+import com.bdang.storage.exception.UnregisteredConceptException;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -28,9 +29,9 @@ public class TinkerGraphAccessorTest {
 
         String id1 = accessor.put(fact);
 
-        assertTrue(g.V().has(NAME, "otter").hasNext());
-        assertTrue(g.V().has(NAME, "river").hasNext());
-        assertTrue(g.V().has(NAME, "otter").out("lives").has(NAME, "river").hasNext());
+        assertThat(g.V().has(NAME, "otter").count().next(), is(1L));
+        assertThat(g.V().has(NAME, "river").count().next(), is(1L));
+        assertThat(g.V().has(NAME, "otter").out("lives").has(NAME, "river").count().next(), is(1L));
 
         String id2 = accessor.put(fact);
 
@@ -50,11 +51,11 @@ public class TinkerGraphAccessorTest {
 
         boolean deleted = accessor.delete(id);
 
-        assertTrue(deleted);
-        assertFalse(g.E().hasId(id).hasNext());
+        assertThat(deleted, is(true));
+        assertThat(g.E().has(GUID, id).count().next(), is(0L));
 
         deleted = accessor.delete("non-existent id");
-        assertFalse(deleted);
+        assertThat(deleted, is(false));
     }
 
     @Test
@@ -75,7 +76,7 @@ public class TinkerGraphAccessorTest {
         assertThat(fact.getObject(), equalTo("river"));
 
         fact = accessor.get("non-existent id");
-        assertNull(fact);
+        assertThat(fact, nullValue());
     }
 
     @Test
@@ -105,6 +106,23 @@ public class TinkerGraphAccessorTest {
     }
 
     @Test
+    public void testFindUnregisteredConcept() throws Exception {
+        Graph graph = TinkerGraph.open();
+
+        GraphTraversalSource g = graph.traversal();
+        Accessor accessor = new TinkerGraphAccessor(g);
+
+        Fact query = new Fact.Builder().subject("animal").rel("has").object("legs").build();
+
+        try {
+            accessor.find(query);
+            fail("Expected an exception to be thrown, but didn't catch one.");
+        } catch (Exception e) {
+            assertThat(e, instanceOf(UnregisteredConceptException.class));
+        }
+    }
+
+    @Test
     public void testCount() throws Exception {
         Graph graph = TinkerGraph.open();
 
@@ -127,5 +145,22 @@ public class TinkerGraphAccessorTest {
         long count = accessor.count(query);
 
         assertThat(count, is(3L));
+    }
+
+    @Test
+    public void testCountUnregisteredConcept() throws Exception {
+        Graph graph = TinkerGraph.open();
+
+        GraphTraversalSource g = graph.traversal();
+        Accessor accessor = new TinkerGraphAccessor(g);
+
+        Fact query = new Fact.Builder().subject("animal").rel("has").object("legs").build();
+
+        try {
+            accessor.count(query);
+            fail("Expected an exception to be thrown, but didn't catch one.");
+        } catch (Exception e) {
+            assertThat(e, instanceOf(UnregisteredConceptException.class));
+        }
     }
 }

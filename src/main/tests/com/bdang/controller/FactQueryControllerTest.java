@@ -39,7 +39,7 @@ public class FactQueryControllerTest {
             controller.find(null, null, null);
             fail("Expected an exception to be thrown, but didn't catch one.");
         } catch (Exception e) {
-            assertTrue(e instanceof FactQueryParseException);
+            assertThat(e, instanceOf(FactQueryParseException.class));
         }
     }
 
@@ -50,7 +50,7 @@ public class FactQueryControllerTest {
             controller.find("otter", "contemplates", "existence");
             fail("Expected an exception to be thrown, but didn't catch one.");
         } catch (Exception e) {
-            assertTrue(e instanceof FactQueryParseException);
+            assertThat(e, instanceOf(FactQueryParseException.class));
         }
     }
 
@@ -67,7 +67,7 @@ public class FactQueryControllerTest {
             controller.find("animal", "has", "toenails");
             fail("Expected an exception to be thrown, but didn't catch one.");
         } catch(Exception e) {
-            assertTrue(e instanceof InvalidFactQueryException);
+            assertThat(e, instanceOf(InvalidFactQueryException.class));
         }
     }
 
@@ -91,7 +91,7 @@ public class FactQueryControllerTest {
             controller.count(null, null, null);
             fail("Expected an exception to be thrown, but didn't catch one.");
         } catch (Exception e) {
-            assertTrue(e instanceof FactQueryParseException);
+            assertThat(e, instanceOf(FactQueryParseException.class));
         }
     }
 
@@ -102,7 +102,7 @@ public class FactQueryControllerTest {
             controller.count("otter", "contemplates", "existence");
             fail("Expected an exception to be thrown, but didn't catch one.");
         } catch (Exception e) {
-            assertTrue(e instanceof FactQueryParseException);
+            assertThat(e, instanceOf(FactQueryParseException.class));
         }
     }
 
@@ -119,7 +119,7 @@ public class FactQueryControllerTest {
             controller.count("animal", "has", "toenails");
             fail("Expected an exception to be thrown, but didn't catch one.");
         } catch(Exception e) {
-            assertTrue(e instanceof InvalidFactQueryException);
+            assertThat(e, instanceOf(InvalidFactQueryException.class));
         }
     }
 }
