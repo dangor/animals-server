@@ -79,35 +79,37 @@ public class TinkerGraphAccessor implements Accessor {
             while (edges.hasNext()) {
                 Edge edge = edges.next();
                 if (edge.inVertex().id().equals(vObject.id())) {
-                    return edge.id().toString();
+                    return edge.property(GUID).value().toString();
                 }
             }
         }
 
-        return vSubject.addEdge(fact.getRel(), vObject).id().toString();
+        String guid = UUID.randomUUID().toString();
+        vSubject.addEdge(fact.getRel(), vObject, GUID, guid);
+        return guid;
     }
 
     // O(1)
     public boolean delete(String id) {
-        if (!g.E().hasId(id).hasNext()) {
+        if (!g.E().has(GUID, id).hasNext()) {
             return false;
         }
 
-        g.E().hasId(id).drop().iterate();
+        g.E().has(GUID, id).drop().iterate();
         return true;
     }
 
     // O(1)
     public Fact get(String id) {
-        if (!g.E().hasId(id).hasNext()) {
+        if (!g.E().has(GUID, id).hasNext()) {
             return null;
         }
 
         Fact.Builder builder = new Fact.Builder();
 
-        builder.subject(g.E().hasId(id).outV().next().value(NAME).toString());
-        builder.rel(g.E().hasId(id).next().label());
-        builder.object(g.E().hasId(id).inV().next().value(NAME).toString());
+        builder.subject(g.E().has(GUID, id).outV().next().value(NAME).toString());
+        builder.rel(g.E().has(GUID, id).next().label());
+        builder.object(g.E().has(GUID, id).inV().next().value(NAME).toString());
 
         return builder.build();
     }

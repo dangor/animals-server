@@ -16,6 +16,7 @@ import static org.junit.Assert.*;
 public class TinkerGraphAccessorTest {
 
     private static final String NAME = "name";
+    private static final String GUID = "guid";
 
     @Test
     public void testPut() throws Exception {
@@ -41,7 +42,8 @@ public class TinkerGraphAccessorTest {
         Graph graph = TinkerGraph.open();
         Vertex subject = graph.addVertex(NAME, "otter");
         Vertex object = graph.addVertex(NAME, "river");
-        String id = subject.addEdge("lives", object).id().toString();
+        String id = "1234";
+        subject.addEdge("lives", object, GUID, id);
 
         GraphTraversalSource g = graph.traversal();
         Accessor accessor = new TinkerGraphAccessor(g);
@@ -60,7 +62,8 @@ public class TinkerGraphAccessorTest {
         Graph graph = TinkerGraph.open();
         Vertex subject = graph.addVertex(NAME, "otter");
         Vertex object = graph.addVertex(NAME, "river");
-        String id = subject.addEdge("lives", object).id().toString();
+        String id = "1234";
+        subject.addEdge("lives", object, GUID, id);
 
         GraphTraversalSource g = graph.traversal();
         Accessor accessor = new TinkerGraphAccessor(g);
