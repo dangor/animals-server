@@ -8,6 +8,7 @@ import org.apache.commons.configuration.ConfigurationException;
 import org.apache.tinkerpop.gremlin.process.traversal.Traverser;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
+import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__;
 import org.apache.tinkerpop.gremlin.structure.*;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.apache.tinkerpop.gremlin.util.config.YamlConfiguration;
@@ -15,19 +16,33 @@ import org.apache.tinkerpop.gremlin.util.config.YamlConfiguration;
 import java.io.*;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class TinkerGraphAccessor implements Accessor {
 
-    private static final String remoteGremlinConfig = "/Users/bdang/animals/dynamodb-titan-storage-backend/server/dynamodb-titan100-storage-backend-1.0.0-hadoop1/conf/remote.yaml";
+    public enum QueryInheritance {
+        NONE,         // Crawl through "isa" relationship only once for the subject in query
+        SUBJECT_ONLY, // Crawl through "isa" relationships for the subject in queries
+        BOTH          // Crawl through "isa" relationships for both subject and object in queries
+    }
+
+    private static final String remoteGremlinConfig = "conf/remote.yaml";
     private static final String NAME = "name";
     private static final String GUID = "guid";
     private final GraphTraversalSource g;
+    private final QueryInheritance inherit;
 
     // Package visibility for factory
     TinkerGraphAccessor(DBLocation dbLocation) {
+        this(dbLocation, QueryInheritance.BOTH);
+    }
+
+    private TinkerGraphAccessor(DBLocation dbLocation, QueryInheritance inherit) {
+        this.inherit = inherit;
         final TinkerGraph graph;
         switch (dbLocation) {
             case EXTERNAL:
+                // Note: This section still needs work
                 YamlConfiguration config = new YamlConfiguration();
                 try {
                     config.load(new FileReader(remoteGremlinConfig));
@@ -48,6 +63,7 @@ public class TinkerGraphAccessor implements Accessor {
     @VisibleForTesting
     TinkerGraphAccessor(GraphTraversalSource g) {
         this.g = g;
+        inherit = QueryInheritance.BOTH;
     }
 
     // Worst case: O(n) where n = edges with relationship from subject
@@ -112,10 +128,14 @@ public class TinkerGraphAccessor implements Accessor {
         return builder.build();
     }
 
-    // O(m * n) where m = concepts matching "isa [subject]" and n = edges with relationship from m concepts
-    public List<String> find(final Fact query) throws UnregisteredConceptException {
+    public List<String> find(Fact query) throws UnregisteredConceptException {
         checkConceptsRegistered(query); // O(1)
 
+        return inherit == QueryInheritance.NONE ? findNoInheritance(query) : findWithInheritance(query);
+    }
+
+    // O(m * n) where m = concepts matching "isa [subject]" and n = edges with relationship from m concepts
+    private List<String> findNoInheritance(Fact query) {
         final List<String> findResults = new ArrayList<>();
 
         GraphTraversal<Vertex, Vertex> filter = g.V().has(NAME, query.getSubject()).in(Relation.ISA.toString()) // O(m)
@@ -128,11 +148,35 @@ public class TinkerGraphAccessor implements Accessor {
         return Collections.unmodifiableList(findResults);
     }
 
-    // O(m * n) where m = concepts matching "isa [subject]" and n = edges with relationship from m concepts
+    // O(m) + O(n * k) where m = # of parents of subject and n = # of parents of object and k = # of related edges from n
+    @VisibleForTesting
+    List<String> findWithInheritance(Fact query) {
+        // Step 1: Find all vertices which are parents of the query subject via "isa"
+        Set<String> candidateSubjects = g.V().has(NAME, query.getSubject())
+                .until(__.in(Relation.ISA.toString()).count().is(0L))
+                .repeat(__.in(Relation.ISA.toString())).emit().dedup() // O(m)
+                .toList().stream().map(V -> V.value(NAME).toString()).collect(Collectors.toSet());
+
+        // Step 2: Find all object vertex, and include parents if QueryInheritance is both subject and object
+        GraphTraversal<Vertex, Vertex> objectTraversal = g.V().has(NAME, query.getObject());
+        if (inherit == QueryInheritance.BOTH) {
+            objectTraversal = objectTraversal.until(__.in(Relation.ISA.toString()).count().is(0L))
+                    .emit().repeat(__.in(Relation.ISA.toString())).dedup(); // O(n)
+        }
+
+        // Step 3: Traverse through edges with given relationship, then find intersection with candidate subject vertices
+        Set<String> subjectsRelatedToObject = objectTraversal.in(query.getRel()).dedup() // O(n * k)
+                .toList().stream().map(V -> V.value(NAME).toString()).collect(Collectors.toSet());
+
+        candidateSubjects.retainAll(subjectsRelatedToObject); // linear
+
+        return Collections.unmodifiableList(new ArrayList<>(candidateSubjects)); // linear
+    }
+
     public long count(Fact query) throws UnregisteredConceptException {
         checkConceptsRegistered(query); // O(1)
 
-        return g.V().has(NAME, query.getSubject()).in(Relation.ISA.toString()).out(query.getRel()).has(NAME, query.getObject()).count().next();
+        return find(query).size();
     }
 
     // O(1)

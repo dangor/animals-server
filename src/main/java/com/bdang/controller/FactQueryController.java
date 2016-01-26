@@ -21,7 +21,7 @@ public class FactQueryController {
     private final Accessor accessor;
 
     public FactQueryController() {
-        accessor = AccessorFactory.getAccessor(DBLocation.INMEMORY);
+        accessor = AccessorFactory.getAccessor();
     }
 
     @VisibleForTesting

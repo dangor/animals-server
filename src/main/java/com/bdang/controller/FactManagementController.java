@@ -18,7 +18,7 @@ public class FactManagementController {
     private final Accessor accessor;
 
     public FactManagementController() {
-        accessor = AccessorFactory.getAccessor(DBLocation.INMEMORY);
+        accessor = AccessorFactory.getAccessor();
     }
 
     @VisibleForTesting

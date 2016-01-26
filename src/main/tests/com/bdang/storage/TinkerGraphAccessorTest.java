@@ -101,8 +101,54 @@ public class TinkerGraphAccessorTest {
         Fact query = new Fact.Builder().subject("animal").rel("has").object("legs").build();
         List<String> names = accessor.find(query);
 
-        assertThat(names.size(), is(3));
         assertThat(names, hasItems("otter", "fox", "moose"));
+        assertThat(names.size(), is(3));
+    }
+
+    @Test
+    public void testFindWithInheritance() throws Exception {
+        Graph graph = TinkerGraph.open();
+
+        Vertex otter = graph.addVertex(NAME, "otter");
+        Vertex bear = graph.addVertex(NAME, "bear");
+        Vertex cormorant = graph.addVertex(NAME, "cormorant");
+        Vertex bee = graph.addVertex(NAME, "bee");
+        Vertex herring = graph.addVertex(NAME, "herring");
+        Vertex salmon = graph.addVertex(NAME, "salmon");
+
+        Vertex insect = graph.addVertex(NAME, "insect");
+        Vertex mammal = graph.addVertex(NAME, "mammal");
+        Vertex fish = graph.addVertex(NAME, "fish");
+        Vertex bird = graph.addVertex(NAME, "bird");
+
+        Vertex animal = graph.addVertex(NAME, "animal");
+
+        otter.addEdge("isa", mammal);
+        bear.addEdge("isa", mammal);
+        cormorant.addEdge("isa", bird);
+        bee.addEdge("isa", insect);
+        herring.addEdge("isa", fish);
+        salmon.addEdge("isa", fish);
+
+        bird.addEdge("isa", animal);
+        insect.addEdge("isa", animal);
+        fish.addEdge("isa", animal);
+        mammal.addEdge("isa", animal);
+
+        otter.addEdge("eats", herring);
+        bear.addEdge("eats", salmon);
+        cormorant.addEdge("eats", herring);
+        herring.addEdge("eats", insect);
+        salmon.addEdge("eats", insect);
+
+        GraphTraversalSource g = graph.traversal();
+        TinkerGraphAccessor accessor = new TinkerGraphAccessor(g);
+
+        Fact query = new Fact.Builder().subject("animal").rel("eats").object("fish").build();
+        List<String> names = accessor.findWithInheritance(query);
+
+        assertThat(names, hasItems("otter", "bear", "cormorant"));
+        assertThat(names.size(), is(3));
     }
 
     @Test
