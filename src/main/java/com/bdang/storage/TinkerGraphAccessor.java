@@ -9,11 +9,14 @@ import org.apache.tinkerpop.gremlin.process.traversal.Traverser;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__;
-import org.apache.tinkerpop.gremlin.structure.*;
+import org.apache.tinkerpop.gremlin.structure.Direction;
+import org.apache.tinkerpop.gremlin.structure.Edge;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph;
 import org.apache.tinkerpop.gremlin.util.config.YamlConfiguration;
 
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -68,6 +71,7 @@ public class TinkerGraphAccessor implements Accessor {
 
     // Worst case: O(n) where n = edges with relationship from subject
     // Best case: O(1) if the edge already exists
+    @Override
     public String put(final Fact fact) {
         // Ensure both subject and object are existing vertices. If not, create them.
         boolean bothVerticesExist = true;
@@ -103,6 +107,7 @@ public class TinkerGraphAccessor implements Accessor {
     }
 
     // O(1)
+    @Override
     public boolean delete(String id) {
         if (!g.E().has(GUID, id).hasNext()) { // O(1) - edge property index has been created
             return false;
@@ -113,6 +118,7 @@ public class TinkerGraphAccessor implements Accessor {
     }
 
     // O(1)
+    @Override
     public Fact get(String id) {
         if (!g.E().has(GUID, id).hasNext()) { // O(1) - edge property index has been created
             return null;
@@ -128,6 +134,7 @@ public class TinkerGraphAccessor implements Accessor {
         return builder.build();
     }
 
+    @Override
     public List<String> find(Fact query) throws UnregisteredConceptException {
         checkConceptsRegistered(query); // O(1)
 
@@ -173,10 +180,19 @@ public class TinkerGraphAccessor implements Accessor {
         return Collections.unmodifiableList(new ArrayList<>(candidateSubjects)); // linear
     }
 
+    // Runtime complexity matches find()
+    @Override
     public long count(Fact query) throws UnregisteredConceptException {
         checkConceptsRegistered(query); // O(1)
 
         return find(query).size();
+    }
+
+    // O(n) where n = # of concepts
+    @Override
+    public boolean deleteAll() {
+        g.V().drop().iterate();
+        return !g.V().hasNext();
     }
 
     // O(1)

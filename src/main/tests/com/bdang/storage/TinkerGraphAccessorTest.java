@@ -12,7 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
 public class TinkerGraphAccessorTest {
 
@@ -208,5 +209,30 @@ public class TinkerGraphAccessorTest {
         } catch (Exception e) {
             assertThat(e, instanceOf(UnregisteredConceptException.class));
         }
+    }
+
+    @Test
+    public void testDeleteAll() throws Exception {
+        Graph graph = TinkerGraph.open();
+
+        List<Vertex> animals = new ArrayList<>(3);
+        animals.add(graph.addVertex(NAME, "otter"));
+        animals.add(graph.addVertex(NAME, "fox"));
+        animals.add(graph.addVertex(NAME, "moose"));
+        Vertex legs = graph.addVertex(NAME, "legs");
+        Vertex animal = graph.addVertex(NAME, "animal");
+
+        for (Vertex vertex : animals) {
+            vertex.addEdge("isa", animal);
+            vertex.addEdge("has", legs);
+        }
+
+        GraphTraversalSource g = graph.traversal();
+        Accessor accessor = new TinkerGraphAccessor(g);
+
+        boolean delete = accessor.deleteAll();
+
+        assertThat(delete, is(true));
+        assertThat(graph.vertices().hasNext(), is(false));
     }
 }

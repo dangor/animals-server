@@ -5,7 +5,6 @@ import com.bdang.controller.exception.FactParseException;
 import com.bdang.facts.Fact;
 import com.bdang.storage.Accessor;
 import com.bdang.storage.AccessorFactory;
-import com.bdang.storage.DBLocation;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -70,6 +69,13 @@ public class FactManagementController {
 
         IdResponse response = new IdResponse(id);
         return new Gson().toJson(response);
+    }
+
+    @RequestMapping(value = "/animals/facts/all", method = RequestMethod.DELETE)
+    @ResponseBody
+    public String deleteAllFacts() {
+        boolean deleted = accessor.deleteAll();
+        return deleted ? "Clean" : "Failed";
     }
 
     @ExceptionHandler(FactParseException.class)

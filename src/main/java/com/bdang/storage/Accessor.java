@@ -19,7 +19,7 @@ public interface Accessor {
     /**
      * Delete a fact with the given ID.
      * @param id Fact ID to be deleted
-     * @return Fact ID deleted
+     * @return True if deleted
      */
     boolean delete(String id);
 
@@ -43,4 +43,10 @@ public interface Accessor {
      * @return Count of matching facts
      */
     long count(Fact query) throws UnregisteredConceptException;
+
+    /**
+     * Clears the DB. Useful for re-training and testing the web service.
+     * @return True if successful
+     */
+    boolean deleteAll();
 }
