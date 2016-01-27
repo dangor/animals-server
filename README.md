@@ -1,19 +1,55 @@
 # Brian's Animal Server
 
+## Web service
+Hostname: bdang-animalia.elasticbeanstalk.com
+Port: 80
+
+### API
+
+Write facts with POST /animals/facts:
+```
+curl -H "Content-Type: application/json" -X POST -d '{ "subject": "otter", "rel": "lives", "object": "river" }' http://bdang-animalia.elasticbeanstalk.com/animals/facts
+```
+
+Get facts with GET /animals/facts/{id}:
+```
+curl http://bdang-animalia.elasticbeanstalk.com/animals/facts/f6c18044-39ad-408e-8dec-dfba8f9609be
+```
+
+Delete facts with DELETE /animals/facts/{id}:
+```
+curl -X DELETE http://bdang-animalia.elasticbeanstalk.com/animals/facts/f6c18044-39ad-408e-8dec-dfba8f9609be
+```
+
+Query facts with GET /animals/which?s={subject}&r={rel}&o={object}:
+```
+curl -X GET "http://bdang-animalia.elasticbeanstalk.com/animals/which?s=animal&r=isa&o=mammal"
+```
+
+Count facts with GET /animals/how-many?s={subject}&r={rel}&o={object}:
+```
+curl -X GET "http://bdang-animalia.elasticbeanstalk.com/animals/how-many?s=animal&r=isa&o=mammal"
+```
+
+Delete all facts with DELETE /animals/facts/all
+```
+curl -X DELETE http://bdang-animalia.elasticbeanstalk.com/animals/facts/all
+```
+
 ## Deploying Locally
 Clone repository:
 ```
 git clone https://github.com/dangor/animals-server.git
 ```
 
-Start web server:
+Start web server (uses port 8080 by default). Requires [Maven](https://maven.apache.org/index.html):
 ```
 mvn tomcat7:run
 ```
 
 In the same directory, you may train the server with initial data:
 ```
-./training/train.sh ./training/animalia_data.csv
+./training/train.sh ./training/animalia_data.csv localhost 8080
 ```
 
 ## Functional Tests
@@ -21,7 +57,7 @@ In the same directory, you may train the server with initial data:
 https://chrome.google.com/webstore/detail/postman/fhbjgbiflinjbdggehcddcbncdddomop?hl=en
 2. Import Postman collection by opening this link in Chrome:
 https://www.getpostman.com/collections/e765dbce1e75530cff6f
-3. If you are not running against localhost:8080, you will have to update global config in the top right of Postman
+3. Update the host and port variables in the first test step "post fact a" -> "Pre-request script" (default is bdang-animalia.elasticbeanstalk.com:80)
 4. Run Animalia Tests from the left menu in Postman (you may have click through multiple menus)
 
 ## Query Inheritance
